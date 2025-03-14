@@ -23,7 +23,6 @@ public class Authentication {
         String filename = userType + "s.csv";
 
         try (CSVReader csvReader = new CSVReader(new FileReader(filename))) {
-            // Read all lines at once
             List<String[]> records = csvReader.readAll();
             if (records.isEmpty()) {
                 return false;
@@ -31,17 +30,13 @@ public class Authentication {
 
             String[] headers = records.get(0);
 
-            // Process each line
             for (int i = 1; i < records.size(); i++) {
                 String[] values = records.get(i);
                 Map<String, String> record = new HashMap<>();
 
-                // Create a map of column name to value
                 for (int j = 0; j < headers.length && j < values.length; j++) {
                     record.put(headers[j], values[j]);
                 }
-
-                // Check if email matches and password is valid
                 if (email.equals(record.get("email")) && Authentication.isValidPassword(password, record)) {
                     return true;
                 }

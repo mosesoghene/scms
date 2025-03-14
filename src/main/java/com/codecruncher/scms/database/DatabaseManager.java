@@ -15,9 +15,6 @@ public interface DatabaseManager {
     void delete(String tableName, String key, String value);
     List<String[]> fetchAll(String tableName);
     List<String[]> filterRecords(String tableName, String key, String value);
-
-    boolean recordExists(String value);
-
     boolean recordExists(String tableName, String key, String value);
 
 }
