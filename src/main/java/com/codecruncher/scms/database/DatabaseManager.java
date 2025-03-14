@@ -5,8 +5,6 @@ import java.util.Map;
 
 public interface DatabaseManager {
     void initialize();
-    String getFilePath(String tableName);
-    int getNextId(String tableName);
 
     void save(String tableName, String[] record);
 

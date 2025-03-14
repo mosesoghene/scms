@@ -44,12 +44,12 @@ public class CSVDatabaseManager implements DatabaseManager {
         }
     }
 
-    @Override
-    public String getFilePath(String tableName){
+
+    private String getFilePath(String tableName){
         return  tableName + ".csv";
     }
 
-    @Override
+
     public int getNextId(String tableName){
         List<String[]> records = fetchAll(tableName);
         if (records.isEmpty()) return 1;
