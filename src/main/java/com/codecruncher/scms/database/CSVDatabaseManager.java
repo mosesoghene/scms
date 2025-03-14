@@ -14,21 +14,17 @@ import java.util.List;
 import java.util.Map;
 
 public class CSVDatabaseManager implements DatabaseManager {
-
-    public static void main(String[] args) {
-        DatabaseManager databaseManager = new CSVDatabaseManager();
-        databaseManager.initialize();
-        databaseManager.save("students", new String[] {"1", "Moses", "moses@email.com", "password"});
+    public CSVDatabaseManager() {
+        initialize();
     }
-
 
     @Override
     public void initialize() {
         Map<String, String[]> tables = new HashMap<>();
         tables.put("students", new String[] {"student_id", "name", "email", "password"});
-        tables.put("courses", new String[]  {"instructor_id", "name", "email", "password"});
-        tables.put("enrollments", new String[]  {"course_id", "title", "instructor_id"});
-        tables.put("instructors", new String[]  {"student_id", "course_id", "grade"});
+        tables.put("instructors", new String[]  {"instructor_id", "name", "email", "password"});
+        tables.put("courses", new String[]  {"course_id", "title", "instructor_id"});
+        tables.put("enrollments", new String[]  {"student_id", "course_id", "grade"});
 
         for (Map.Entry<String, String[]> entry : tables.entrySet()) {
             String tableName = entry.getKey();
@@ -48,12 +44,12 @@ public class CSVDatabaseManager implements DatabaseManager {
         }
     }
 
-    @Override
-    public String getFilePath(String tableName){
+
+    private String getFilePath(String tableName){
         return  tableName + ".csv";
     }
 
-    @Override
+
     public int getNextId(String tableName){
         List<String[]> records = fetchAll(tableName);
         if (records.isEmpty()) return 1;
@@ -102,11 +98,6 @@ public class CSVDatabaseManager implements DatabaseManager {
     }
 
     @Override
-    public void delete(String tableName, String key, String value){
-
-    }
-
-    @Override
     public List<String[]> fetchAll(String tableName){
         File file = new File(getFilePath(tableName));
         try (CSVReader csvReader = new CSVReader(new FileReader(file))) {
@@ -119,17 +110,68 @@ public class CSVDatabaseManager implements DatabaseManager {
 
     @Override
     public List<String[]> filterRecords(String tableName, String key, String value){
-        return List.of(new String[] {"Hello", "world"}, new String[] {"Hy", "mal"});
+        List<String[]> allRecords = fetchAll(tableName);
+        List<String[]> filteredRecords = new ArrayList<>();
+
+        if (allRecords == null || allRecords.isEmpty()) {
+            return filteredRecords;
+        }
+
+        String[] headers = allRecords.get(0);
+        for (int i = 1; i < allRecords.size(); i++) {
+            String[] row = allRecords.get(i);
+            Map<String, String> record = new HashMap<>();
+            for (int j = 0; j < headers.length; j++) {
+                record.put(headers[j], row[j]);
+            }
+            if (record.get(key).equals(value)) {
+                filteredRecords.add(row);
+            }
+        }
+
+        return filteredRecords;
     }
 
     @Override
-    public boolean recordExists(String value) {
-        return false;
+    public void delete(String tableName, String key, String value){
+        String filename = getFilePath(tableName);
+        List<String[]> allRecords = fetchAll(tableName);
+
+        if (allRecords == null || allRecords.isEmpty()) {
+            return;
+        }
+
+        String[] headers = allRecords.get(0);
+
+        try (CSVWriter csvWriter = new CSVWriter(new FileWriter(filename))) {
+            csvWriter.writeNext(headers);
+
+            allRecords.stream()
+                    .skip(1)
+                    .filter(row -> {
+                        Map<String, String> record = new HashMap<>();
+                        for (int i = 0; i < headers.length; i++) record.put(headers[i], row[i]);
+                        return !record.get(key).equals(value);
+                    })
+                    .forEach(csvWriter::writeNext);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
-    public boolean recordExists(String tableName, String key, String value){
-        return false;
+    public boolean recordExists(String tableName, String key, String value) {
+        List<String[]> allRecords = fetchAll(tableName);
+        if (allRecords == null || allRecords.isEmpty())  return false;
+        String[] headers = allRecords.get(0);
+
+        return allRecords.stream()
+                .skip(1)
+                .anyMatch(row -> {
+                    Map<String, String> record = new HashMap<>();
+                    for (int i = 0; i < headers.length; i++) record.put(headers[i], row[i]);
+                    return record.get(key).equals(value);
+                });
     }
 
 }
